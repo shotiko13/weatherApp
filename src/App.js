@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Widget from "./Widget";
+import './App.css';
 
 function App() {
   const [location, setLocation] = useState(null);
@@ -23,7 +24,20 @@ function App() {
     }
   }, []);
 
-  const [visibleCards, SetVisibleCards] = useState([]);
+  const [visibleCards, SetVisibleCards] = useState([
+    {
+      id: 1,
+      img: 'https://via.placeholder.com/50',
+      weather: '22°C',
+      city: 'San Francisco',
+    },
+    {
+      id: 2,
+      img: 'https://via.placeholder.com/50',
+      weather: '30°C',
+      city: 'Los Angeles',
+    },
+  ]);
 
   useEffect(() => {
     if (location) {
@@ -35,19 +49,20 @@ function App() {
     SetVisibleCards(visibleCards.filter((card) => card.id != id));
   };
 
-  const widgets = visibleCards.map((x) => {
-    return (
-      <Widget
-        key={x.id}
-        id={x.id}
-        img={x.img}
-        weather={x.weather}
-        city={x.city} />
-    )
-  })
   return (
     <div className="App">
-      {widgets}
+      <div className="widget-container">
+        {visibleCards.map((card) => (
+          <Widget
+            key={card.id}
+            id={card.id}
+            img={card.img}
+            weather={card.weather}
+            city={card.city}
+            onRemove={handleRemove}
+          />
+        ))}
+      </div>
     </div>
   );
 }
