@@ -1,20 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import Widget from "./Widget";
+import { useQuery } from '@apollo/client';
 import './App.css';
+import { WEATHER_QUERY } from './queries';
 
 function App() {
   const [location, setLocation] = useState(null);
+  const [city, setCity] = useState('Tbilisi');
+
+  const { loading, error, data } = useQuery(WEATHER_QUERY, {
+    variables: { city },
+  });
+
+  const weatherData = data?.weatherData;
+
+  
 
   useEffect(() => {
     const handleSuccess = (position) => {
       setLocation({
         latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
+        longtitude: position.coords.longtitude,
       });
     };
 
     const handleError = (error) => {
-      console.error('Error obtaining your location:', error);
+      console.error('Error finding you:', error);
     };
 
     if (navigator.geolocation) {
@@ -24,26 +35,72 @@ function App() {
     }
   }, []);
 
-  const [visibleCards, SetVisibleCards] = useState([
-    {
-      id: 1,
-      img: 'https://via.placeholder.com/50',
-      weather: '22°C',
-      city: 'San Francisco',
-    },
-    {
-      id: 2,
-      img: 'https://via.placeholder.com/50',
-      weather: '30°C',
-      city: 'Los Angeles',
-    },
-  ]);
+  const [visibleCards, SetVisibleCards] = useState([]);
 
+  async function getCity(latitude, longtitude) {
+    
+      const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longtitude}`;
+      console.log('Latitude:', latitude, 'Longitude:', longtitude);
+      try {
+        const resp = await fetch(url);
+        const data = await resp.json();
+        if (data && data.address) {
+          return data.address.city || data.address.town || data.address.village;
+        }
+      } catch (error) {
+        console.error("Can't get your city based on your coordinates:", error);
+      }
+      return null;
+    }
+  
+
+  // useEffect(() => {
+  //   if (location) {
+  //     const fetchCity = async () => {
+  //       const name = await getCity(location.latitude, location.longtitude)
+  //       if (name) {
+  //         setCity(name);
+  //         if (weatherData){
+  //         addCityToVisibleCards(weatherData);
+  //         }
+  //       }
+  //     };
+  //     fetchCity();
+  //   }
+  // }, [location, weatherData]);
+
+  
   useEffect(() => {
     if (location) {
-
+      const fetchCity = async () => {
+        const name = await getCity(location.latitude, location.longtitude)
+        if (name) {
+          setCity(name);
+        }
+      };
+      fetchCity();
     }
-  }, location);
+  }, [location]);
+  
+
+  useEffect(() => {
+    if (city && weatherData) {
+      addCityToVisibleCards(weatherData);
+    }
+  }, [city, weatherData]);
+
+  function addCityToVisibleCards(weatherData) {
+    SetVisibleCards((prev) => {
+      const thisCity = prev.find((x) => x.city === weatherData.city);
+
+      if (!thisCity) {
+        return [...prev, weatherData];
+      } else {
+        return prev;
+      }
+    });
+  }
+
 
   const handleRemove = (id) => {
     SetVisibleCards(visibleCards.filter((card) => card.id != id));

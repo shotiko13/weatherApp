@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { ApolloProvider } from '@apollo/client';
-import client from './client';
+import client from './Client';
 import App from './App';
 import './tailwind.css';
 
