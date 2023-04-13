@@ -3,17 +3,16 @@ import Widget from "./Widget";
 import { useQuery } from '@apollo/client';
 import './App.css';
 import { WEATHER_QUERY } from './queries';
+// import './Widget.css'
 
 function App() {
   const [location, setLocation] = useState(null);
-  const [city, setCity] = useState('Kutaisi');
 
-  //get latitude and longtitude
   useEffect(() => {
     const handleSuccess = (position) => {
       setLocation({
         latitude: position.coords.latitude,
-        longtitude: position.coords.longitude,
+        longitude: position.coords.longitude,
       });
     };
 
@@ -28,16 +27,12 @@ function App() {
     }
   }, []);
 
-  async function getCity(latitude, longtitude) {
-    console.log('Latitude:', latitude, 'Longtitude:', longtitude);
-
+  async function getCity(latitude, longitude) {
     
-    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${parseFloat(latitude)}&lon=${parseFloat(longtitude)}`;
-    console.log('Latitude:', latitude, 'Longtitude:', longtitude);
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`;
     try {
       const resp = await fetch(url);
       const data = await resp.json();
-      console.log('Data from Nominatim API:', data);
       if (data && data.address) {
         return data.address.city || data.address.town || data.address.village;
       }
@@ -47,14 +42,10 @@ function App() {
     return null;
   }
 
-  const { loading, error, data } = useQuery(WEATHER_QUERY, {
-    variables: { city },
-  });
-
   useEffect(() => {
     if (location) {
       const fetchCity = async () => {
-        const name = await getCity(location.latitude, location.longtitude)
+        const name = await getCity(location.latitude, location.longitude)
         if (name) {
           setCity(name);
         }
@@ -62,25 +53,19 @@ function App() {
       fetchCity();
     }
   }, [location]);
+  
+  const [city, setCity] = useState('Kutaisi');
+
+  const { loading, error, data } = useQuery(WEATHER_QUERY, {
+    variables: { city },
+  });
 
   const weatherData = data?.weatherData;
-  
-  
-  useEffect(() => {
-    if (city && weatherData) {
-      addCityToVisibleCards(weatherData);
-    }
-  }, [city, weatherData]);
 
-  
-
-
-
-  
-  const [visibleCards, SetVisibleCards] = useState([]);
+  const [visibleCards, setVisibleCards] = useState([]);
 
   function addCityToVisibleCards(weatherData) {
-    SetVisibleCards((prev) => {
+    setVisibleCards((prev) => {
       const thisCity = prev.find((x) => x.city === weatherData.city);
 
       if (!thisCity) {
@@ -91,9 +76,14 @@ function App() {
     });
   }
 
+  useEffect(() => {
+    if (city && weatherData) {
+      addCityToVisibleCards(weatherData);
+    }
+  }, [city, weatherData]);
 
   const handleRemove = (id) => {
-    SetVisibleCards(visibleCards.filter((card) => card.id != id));
+    setVisibleCards(visibleCards.filter((card) => card.id !== id));
   };
 
   return (
@@ -106,7 +96,6 @@ function App() {
             img={card.img}
             weather={card.weather}
             city={card.city}
-            forecast={card.forecast}
             onRemove={handleRemove}
           />
         ))}
